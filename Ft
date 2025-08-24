@@ -1,0 +1,85 @@
+let t = 0;
+let capturer;
+let recordingStarted = false;
+
+function setup() {
+  createCanvas(1200, 800);
+  noStroke();
+  frameRate(30); // важно для стабильной записи
+
+  // Инициализация CCapture
+  capturer = new CCapture({
+    format: 'webm',
+    framerate: 30,
+    verbose: true
+  });
+}
+
+function draw() {
+  if (frameCount === 1 && !recordingStarted) {
+    capturer.start();
+    recordingStarted = true;
+  }
+
+  background(5);
+
+  let lightX = mouseX;
+  let lightY = mouseY;
+
+  for (let i = 0; i < 4; i++) {
+    let offset = sin(t + i) * 20;
+    let x = 150 + i * 100 + offset;
+    let y = 100 + i * 70 + offset;
+    let w = 420 - i * 40;
+    let h = 200 - i * 25;
+    let c1 = color(30, 60 + i * 20, 180);
+    let c2 = color(90, 140, 255);
+    drawGradientRect(x, y, w, h, c1, c2);
+  }
+
+  drawAnimatedSphere(950, 200, 130, lightX, lightY);
+  drawAnimatedSphere(700, 600, 170, lightX, lightY);
+
+  stroke(255, 130, 20, 180);
+  strokeWeight(2 + sin(t) * 1.5);
+  noFill();
+  bezier(100, 700, 400, 400, 800, 900, 1100, 100);
+  bezier(200, 150, 500, 300, 900, 100, 1000, 400);
+
+  t += 0.01;
+
+  // Захват текущего кадра
+  capturer.capture(document.getElementById('defaultCanvas0'));
+
+  // Остановка записи после 300 кадров (10 секунд при 30 fps)
+  if (frameCount === 300) {
+    capturer.stop();
+    capturer.save();
+    noLoop();
+  }
+}
+
+function drawGradientRect(x, y, w, h, c1, c2) {
+  for (let i = 0; i <= h; i++) {
+    let inter = map(i, 0, h, 0, 1);
+    let c = lerpColor(c1, c2, inter);
+    stroke(c);
+    line(x, y + i, x + w, y + i);
+  }
+}
+
+function drawAnimatedSphere(x, y, r, lx, ly) {
+  for (let i = r; i > 0; i -= 2) {
+    let alpha = map(i, 0, r, 0, 255);
+    fill(255, 130, 20, alpha);
+    ellipse(x, y, i, i);
+  }
+
+  let dx = x - lx;
+  let dy = y - ly;
+  let angle = atan2(dy, dx);
+  let bx = x - cos(angle) * r * 0.3;
+  let by = y - sin(angle) * r * 0.3;
+  fill(255, 220, 150, 180);
+  ellipse(bx, by, r * 0.3, r * 0.3);
+}
